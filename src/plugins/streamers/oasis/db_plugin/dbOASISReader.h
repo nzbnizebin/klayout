@@ -163,11 +163,11 @@ private:
   modal_variable<bool> mm_last_property_is_sprop;
   modal_variable<property_value_list> mm_last_value_list;
 
-  std::map <unsigned long, db::properties_id_type> m_cellname_properties;
-  std::map <unsigned long, std::string> m_textstrings;
-  std::map <unsigned long, const db::StringRef *> m_text_forward_references;
-  std::map <unsigned long, std::string> m_propstrings;
-  std::map <unsigned long, std::string> m_propnames;
+  std::map <size_t, db::properties_id_type> m_cellname_properties;
+  std::map <size_t, std::string> m_textstrings;
+  std::map <size_t, const db::StringRef *> m_text_forward_references;
+  std::map <size_t, std::string> m_propstrings;
+  std::map <size_t, std::string> m_propnames;
 
   std::map <db::cell_index_type, std::vector<tl::Variant> > m_context_strings_per_cell;
 
@@ -178,8 +178,8 @@ private:
   bool m_read_properties;
   bool m_read_all_properties;
 
-  std::map <unsigned long, db::property_names_id_type> m_propname_forward_references;
-  std::map <unsigned long, std::string> m_propvalue_forward_references;
+  std::map <size_t, db::property_names_id_type> m_propname_forward_references;
+  std::map <size_t, std::string> m_propvalue_forward_references;
   std::map <db::properties_id_type, std::set<db::Shapes *> > m_forward_properties_for_shapes;
   std::map <db::properties_id_type, std::set<db::Instances *> > m_forward_properties_for_instances;
   std::map <db::cell_index_type, db::PropertiesSet> m_future_cell_properties;

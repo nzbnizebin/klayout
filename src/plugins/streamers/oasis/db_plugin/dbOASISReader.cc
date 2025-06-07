@@ -681,10 +681,10 @@ OASISReader::do_read (db::Layout &layout)
   m_table_layername = 0;
 
   //  define the name id counters
-  unsigned long cellname_id = 0;
-  unsigned long textstring_id = 0;
-  unsigned long propstring_id = 0;
-  unsigned long propname_id = 0;
+  size_t cellname_id = 0;
+  size_t textstring_id = 0;
+  size_t propstring_id = 0;
+  size_t propname_id = 0;
 
   //  id mode (explicit or implicit)
   enum id_mode { any, expl, impl };
@@ -744,7 +744,7 @@ OASISReader::do_read (db::Layout &layout)
       std::string name = get_str ();
 
       //  and the associated id
-      unsigned long id = cellname_id;
+      size_t id = cellname_id;
       if (r == 3) {
         if (cellname_id_mode == expl) {
           error (tl::to_string (tr ("Explicit and implicit CELLNAME modes cannot be mixed")));
@@ -782,7 +782,7 @@ OASISReader::do_read (db::Layout &layout)
       std::string name = get_str ();
 
       //  and the associated id
-      unsigned long id = textstring_id;
+      size_t id = textstring_id;
       if (r == 5) {
         if (textstring_id_mode == expl) {
           error (tl::to_string (tr ("Explicit and implicit TEXTSTRING modes cannot be mixed")));
@@ -819,7 +819,7 @@ OASISReader::do_read (db::Layout &layout)
       std::string name = get_str ();
 
       //  and the associated id
-      unsigned long id = propname_id;
+      size_t id = propname_id;
       if (r == 7) {
         if (propname_id_mode == expl) {
           error (tl::to_string (tr ("Explicit and implicit PROPNAME modes cannot be mixed")));
@@ -861,7 +861,7 @@ OASISReader::do_read (db::Layout &layout)
       std::string name = get_str ();
 
       //  and the associated id
-      unsigned long id = propstring_id;
+      size_t id = propstring_id;
       if (r == 9) {
         if (propstring_id_mode == expl) {
           error (tl::to_string (tr ("Explicit and implicit PROPSTRING modes cannot be mixed")));
@@ -880,7 +880,7 @@ OASISReader::do_read (db::Layout &layout)
         error (tl::sprintf (tl::to_string (tr ("A PROPSTRING with id %ld is present already")), id));
       }
 
-      std::map<unsigned long, std::string>::iterator fw = m_propvalue_forward_references.find (id);
+      std::map<size_t, std::string>::iterator fw = m_propvalue_forward_references.find (id);
       if (fw != m_propvalue_forward_references.end ()) {
         fw->second = name;
       }
@@ -973,10 +973,10 @@ OASISReader::do_read (db::Layout &layout)
     } else if (r == 30 || r == 31 /*XNAME*/) {
 
       //  read a XNAME: it is simply ignored
-      get_ulong ();
+      get_ulong_long ();
       get_str ();
       if (r == 31) {
-        get_ulong ();
+        get_ulong_long ();
       }
 
       reset_modal_variables ();
@@ -993,7 +993,7 @@ OASISReader::do_read (db::Layout &layout)
       //  read a cell
       if (r == 13) {
 
-        unsigned long id = 0;
+        size_t id = 0;
         get (id);
 
         std::pair<bool, db::cell_index_type> cc = cell_by_id (id);
@@ -1070,7 +1070,7 @@ OASISReader::do_read (db::Layout &layout)
     error (tl::to_string (tr ("Format error (too many bytes after END record)")));
   }
 
-  for (std::map <unsigned long, const db::StringRef *>::const_iterator fw = m_text_forward_references.begin (); fw != m_text_forward_references.end (); ++fw) {
+  for (std::map <size_t, const db::StringRef *>::const_iterator fw = m_text_forward_references.begin (); fw != m_text_forward_references.end (); ++fw) {
     auto ts = m_textstrings.find (fw->first);
     if (ts == m_textstrings.end ()) {
       error (tl::sprintf (tl::to_string (tr ("No text string defined for text string id %ld")), fw->first));
@@ -1080,7 +1080,7 @@ OASISReader::do_read (db::Layout &layout)
   }
 
   //  all forward references to property names must be resolved
-  for (std::map <unsigned long, db::property_names_id_type>::const_iterator fw = m_propname_forward_references.begin (); fw != m_propname_forward_references.end (); ++fw) {
+  for (std::map <size_t, db::property_names_id_type>::const_iterator fw = m_propname_forward_references.begin (); fw != m_propname_forward_references.end (); ++fw) {
     if (fw->second == 0) {
       error (tl::sprintf (tl::to_string (tr ("No property name defined for property name id %ld")), fw->first));
     }
@@ -1181,7 +1181,7 @@ OASISReader::do_read (db::Layout &layout)
   }
 
   //  attach the properties found in CELLNAME to the cells (which may have other properties)
-  for (std::map<unsigned long, db::properties_id_type>::const_iterator p = m_cellname_properties.begin (); p != m_cellname_properties.end (); ++p) {
+  for (std::map<size_t, db::properties_id_type>::const_iterator p = m_cellname_properties.begin (); p != m_cellname_properties.end (); ++p) {
 
     //  The cellname properties ID may be a forward properties ID, resolve it first
 
@@ -1356,7 +1356,7 @@ OASISReader::resolve_forward_references (db::PropertiesSet &properties)
     const tl::Variant &name = db::property_name (p->first);
     if (name.is_id ()) {
 
-      std::map <unsigned long, db::property_names_id_type>::iterator pf = m_propname_forward_references.find (name.to_id ());
+      std::map <size_t, db::property_names_id_type>::iterator pf = m_propname_forward_references.find (name.to_id ());
       if (pf != m_propname_forward_references.end ()) {
 
         if (pf->second == m_s_gds_property_name_id) {
@@ -1389,7 +1389,7 @@ OASISReader::replace_forward_references_in_variant (tl::Variant &v)
   if (v.is_id ()) {
 
     unsigned long id = (unsigned long) v.to_id ();
-    std::map <unsigned long, std::string>::const_iterator fw = m_propvalue_forward_references.find (id);
+    std::map <size_t, std::string>::const_iterator fw = m_propvalue_forward_references.find (id);
     if (fw != m_propvalue_forward_references.end ()) {
       v = tl::Variant (fw->second);
     } else {
@@ -1413,7 +1413,7 @@ OASISReader::replace_forward_references_in_variant (tl::Variant &v)
       for (std::vector<tl::Variant>::iterator ll = new_list.begin (); ll != new_list.end (); ++ll) {
         if (ll->is_id ()) {
           unsigned long id = (unsigned long) ll->to_id ();
-          std::map <unsigned long, std::string>::const_iterator fw = m_propvalue_forward_references.find (id);
+          std::map <size_t, std::string>::const_iterator fw = m_propvalue_forward_references.find (id);
           if (fw != m_propvalue_forward_references.end ()) {
             *ll = tl::Variant (fw->second);
           } else {
@@ -1539,10 +1539,10 @@ OASISReader::read_properties ()
   if (m & 0x04) {
     if (m & 0x02) {
 
-      unsigned long id;
+      size_t id;
       get (id);
 
-      std::map <unsigned long, std::string>::const_iterator cid = m_propnames.find (id);
+      std::map <size_t, std::string>::const_iterator cid = m_propnames.find (id);
       if (cid == m_propnames.end ()) {
         mm_last_property_name = db::property_names_id (tl::Variant (id, true /*dummy for id type*/));
         m_propname_forward_references.insert (std::make_pair (id, db::property_names_id_type (0)));
@@ -1584,15 +1584,15 @@ OASISReader::read_properties ()
 
       } else if (t == 8) {
 
-        unsigned long l;
+        unsigned long long l;
         get (l);
         if (m_read_properties) {
-          mm_last_value_list.get_non_const ().push_back (tl::Variant (long (l)));
+          mm_last_value_list.get_non_const ().push_back (tl::Variant (l));
         }
 
       } else if (t == 9) {
 
-        long l;
+        long long l;
         get (l);
         if (m_read_properties) {
           mm_last_value_list.get_non_const ().push_back (tl::Variant (l));
@@ -1612,10 +1612,10 @@ OASISReader::read_properties ()
 
       } else if (t == 13 || t == 14 || t == 15) {
 
-        unsigned long id;
+        size_t id;
         get (id);
         if (m_read_properties) {
-          std::map <unsigned long, std::string>::const_iterator sid = m_propstrings.find (id);
+          std::map <size_t, std::string>::const_iterator sid = m_propstrings.find (id);
           if (sid == m_propstrings.end ()) {
             m_propvalue_forward_references.insert (std::make_pair (id, std::string ()));
             mm_last_value_list.get_non_const ().push_back (tl::Variant (id, true /*dummy for id type*/));
@@ -1644,7 +1644,7 @@ OASISReader::read_pointlist (modal_variable <std::vector <db::Point> > &pointlis
 {
   unsigned int type = get_uint ();
 
-  unsigned long n = 0;
+  size_t n = 0;
   get (n);
   if (n == 0) {
     error (tl::to_string (tr ("Invalid point list: length is zero")).c_str ());
@@ -1665,7 +1665,7 @@ OASISReader::read_pointlist (modal_variable <std::vector <db::Point> > &pointlis
     bool h = (type == 0);
 
     db::Point pos;
-    for (unsigned long i = 0; i < n; ++i) {
+    for (size_t i = 0; i < n; ++i) {
       db::Coord d = get_coord ();
       if (h) {
         pos += db::Vector (d, 0);
@@ -1691,7 +1691,7 @@ OASISReader::read_pointlist (modal_variable <std::vector <db::Point> > &pointlis
   } else if (type == 2) {
 
     db::Point pos;
-    for (unsigned long i = 0; i < n; ++i) {
+    for (size_t i = 0; i < n; ++i) {
       pos += get_2delta ();
       pointlist.get_non_const ().push_back (pos);
     }
@@ -1699,7 +1699,7 @@ OASISReader::read_pointlist (modal_variable <std::vector <db::Point> > &pointlis
   } else if (type == 3) {
 
     db::Point pos;
-    for (unsigned long i = 0; i < n; ++i) {
+    for (size_t i = 0; i < n; ++i) {
       pos += get_3delta ();
       pointlist.get_non_const ().push_back (pos);
     }
@@ -1707,7 +1707,7 @@ OASISReader::read_pointlist (modal_variable <std::vector <db::Point> > &pointlis
   } else if (type == 4) {
 
     db::Point pos;
-    for (unsigned long i = 0; i < n; ++i) {
+    for (size_t i = 0; i < n; ++i) {
       pos += get_gdelta ();
       pointlist.get_non_const ().push_back (pos);
     }
@@ -1716,7 +1716,7 @@ OASISReader::read_pointlist (modal_variable <std::vector <db::Point> > &pointlis
 
     db::Point pos;
     db::Vector delta;
-    for (unsigned long i = 0; i < n; ++i) {
+    for (size_t i = 0; i < n; ++i) {
       delta += get_gdelta ();
       pos += delta;
       pointlist.get_non_const ().push_back (pos);
@@ -1739,7 +1739,7 @@ OASISReader::read_repetition ()
 
   } else if (type == 1) {
 
-    unsigned long nx = 0, ny = 0;
+    size_t nx = 0, ny = 0;
     get (nx);
     get (ny);
 
@@ -1750,7 +1750,7 @@ OASISReader::read_repetition ()
 
   } else if (type == 2) {
 
-    unsigned long nx = 0;
+    size_t nx = 0;
     get (nx);
 
     db::Coord dx = get_ucoord ();
@@ -1759,7 +1759,7 @@ OASISReader::read_repetition ()
 
   } else if (type == 3) {
 
-    unsigned long ny = 0;
+    size_t ny = 0;
     get (ny);
 
     db::Coord dy = get_ucoord ();
@@ -1771,7 +1771,7 @@ OASISReader::read_repetition ()
     IrregularRepetition *rep = new IrregularRepetition ();
     mm_repetition = rep;
 
-    unsigned long n = 0;
+    size_t n = 0;
     get (n);
 
     unsigned long lgrid = 1;
@@ -1782,7 +1782,7 @@ OASISReader::read_repetition ()
     rep->reserve (n + 1);
 
     db::Coord x = 0;
-    for (unsigned long i = 0; i <= n; ++i) {
+    for (size_t i = 0; i <= n; ++i) {
       m_progress.set (m_stream.pos ());
       db::Coord d = get_ucoord (lgrid);
       if (d != 0) {
@@ -1796,7 +1796,7 @@ OASISReader::read_repetition ()
     IrregularRepetition *rep = new IrregularRepetition ();
     mm_repetition = rep;
 
-    unsigned long n = 0;
+    size_t n = 0;
     get (n);
 
     unsigned long lgrid = 1;
@@ -1807,7 +1807,7 @@ OASISReader::read_repetition ()
     rep->reserve (n + 1);
 
     db::Coord y = 0;
-    for (unsigned long i = 0; i <= n; ++i) {
+    for (size_t i = 0; i <= n; ++i) {
       m_progress.set (m_stream.pos ());
       db::Coord d = get_ucoord (lgrid);
       if (d != 0) {
@@ -1818,7 +1818,7 @@ OASISReader::read_repetition ()
 
   } else if (type == 8) {
 
-    unsigned long n = 0, m = 0;
+    size_t n = 0, m = 0;
 
     get (n);
     get (m);
@@ -1829,7 +1829,7 @@ OASISReader::read_repetition ()
 
   } else if (type == 9) {
 
-    unsigned long n = 0;
+    size_t n = 0;
     get (n);
     db::Vector dn = get_gdelta ();
 
@@ -1840,7 +1840,7 @@ OASISReader::read_repetition ()
     IrregularRepetition *rep = new IrregularRepetition ();
     mm_repetition = rep;
 
-    unsigned long n = 0;
+    size_t n = 0;
     get (n);
 
     unsigned long grid = 1;
@@ -1851,7 +1851,7 @@ OASISReader::read_repetition ()
     rep->reserve (n + 1);
 
     db::Vector p;
-    for (unsigned long i = 0; i <= n; ++i) {
+    for (size_t i = 0; i <= n; ++i) {
       m_progress.set (m_stream.pos ());
       db::Vector d = get_gdelta (grid);
       if (d != db::Vector ()) {
@@ -1882,7 +1882,7 @@ OASISReader::do_read_placement (unsigned char r,
     if (m & 0x40) {
 
       //  cell by id
-      unsigned long id;
+      size_t id;
       get (id);
 
       mm_placement_cell = cell_for_instance (layout, id);
@@ -2078,7 +2078,7 @@ OASISReader::do_read_text (bool xy_absolute,
   if (m & 0x40) {
     if (m & 0x20) {
 
-      unsigned long id;
+      size_t id;
       get (id);
 
       if (m_text_forward_references.find (id) != m_text_forward_references.end ()) {
@@ -2088,7 +2088,7 @@ OASISReader::do_read_text (bool xy_absolute,
 
       } else {
 
-        std::map <unsigned long, std::string>::const_iterator tid = m_textstrings.find (id);
+        std::map <size_t, std::string>::const_iterator tid = m_textstrings.find (id);
         if (tid == m_textstrings.end ()) {
 
           mm_text_string.reset ();
